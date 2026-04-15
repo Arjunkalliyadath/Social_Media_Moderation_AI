@@ -1,37 +1,238 @@
+"""
+AI-Driven Enforcement Intelligence System
+A comprehensive data science application for multi-platform enforcement analytics,
+anomaly detection, and predictive forecasting.
+
+Author: Data Science Professional
+License: MIT
+"""
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.linear_model import LinearRegression
 from io import BytesIO
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
+from reportlab.lib import colors
 import os
+from config import get_config
 
 # -------------------------------------------------
-# PAGE CONFIG
+# PAGE CONFIG & THEME CONFIGURATION
 # -------------------------------------------------
+config = get_config()
+
 st.set_page_config(
     page_title="AI Enforcement Intelligence System",
     page_icon="📊",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-st.title("📊 AI-Driven Enforcement Intelligence System")
-st.markdown("Multi-Platform Monitoring • Comparative Analytics • Risk Intelligence")
+# ============ PROFESSIONAL DATA SCIENCE THEME (DARK MODE) ============
+THEME_CSS = """
+<style>
+    /* Main Container Styling */
+    .main {
+        background: linear-gradient(135deg, #0f1419 0%, #1a1f28 100%);
+        color: #e8eef2;
+    }
+    
+    /* Sidebar Styling */
+    [data-testid="stSidebarContent"] {
+        background: linear-gradient(180deg, #1a1f28 0%, #252d38 100%);
+        border-right: 2px solid rgba(0, 102, 255, 0.2);
+    }
+    
+    /* Typography */
+    .main h1 {
+        color: #00d4ff;
+        font-size: 2.8rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 10px rgba(0, 212, 255, 0.1);
+        letter-spacing: -0.5px;
+    }
+    
+    .main h2 {
+        color: #00d4ff;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid rgba(0, 102, 255, 0.3);
+        padding-bottom: 0.5rem;
+    }
+    
+    .main h3 {
+        color: #7fd3ff;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-top: 1rem;
+    }
+    
+    /* Cards and Containers */
+    .metric-card {
+        background: linear-gradient(135deg, #1a1f28 0%, #252d38 100%);
+        border-radius: 12px;
+        padding: 20px;
+        border-left: 5px solid #00d4ff;
+        box-shadow: 0 4px 15px rgba(0, 102, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        box-shadow: 0 8px 25px rgba(0, 102, 255, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    /* Plotly Charts */
+    .stPlotlyChart {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 102, 255, 0.1);
+    }
+    
+    /* DataFrames */
+    [data-testid="stDataFrame"] {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 102, 255, 0.05);
+    }
+    
+    /* Buttons */
+    .stButton>button {
+        background: linear-gradient(135deg, #0066ff 0%, #0088dd 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        padding: 0.6rem 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton>button:hover {
+        box-shadow: 0 4px 15px rgba(0, 102, 255, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    /* Input Fields */
+    .stTextInput>div>div>input,
+    .stTextArea>div>div>textarea {
+        background-color: #1a1f28 !important;
+        color: #e8eef2 !important;
+        border: 1px solid rgba(0, 102, 255, 0.2) !important;
+        border-radius: 6px !important;
+    }
+    
+    /* Success/Error Messages */
+    .stSuccess {
+        background-color: rgba(0, 200, 100, 0.1) !important;
+        border-left: 4px solid #00c864 !important;
+    }
+    
+    .stError {
+        background-color: rgba(255, 50, 50, 0.1) !important;
+        border-left: 4px solid #ff3232 !important;
+    }
+    
+    .stWarning {
+        background-color: rgba(255, 150, 0, 0.1) !important;
+        border-left: 4px solid #ff9600 !important;
+    }
+    
+    /* Info Messages */
+    .stInfo {
+        background-color: rgba(0, 150, 255, 0.1) !important;
+        border-left: 4px solid #0096ff !important;
+    }
+    
+    /* Custom Badge */
+    .badge {
+        display: inline-block;
+        background: rgba(0, 212, 255, 0.15);
+        color: #00d4ff;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+    
+    /* Column divider */
+    .divider {
+        border-right: 2px solid rgba(0, 102, 255, 0.2);
+    }
+</style>
+"""
+
+st.markdown(THEME_CSS, unsafe_allow_html=True)
+
+st.title("📊 AI Enforcement Intelligence System")
+
+# Header with elegant description
+st.markdown("""
+<div style='text-align: center; margin-bottom: 2rem;'>
+    <p style='color: #7f8a9c; font-size: 1.1rem;'>
+        <strong>Multi-Platform Monitoring</strong> • <strong>Comparative Analytics</strong> • <strong>Risk Intelligence</strong>
+    </p>
+    <p style='color: #5a6476; font-size: 0.95rem; margin-top: 0.5rem;'>
+        Advanced AI-powered enforcement data analysis with anomaly detection & predictive forecasting
+    </p>
+    <div style='margin-top: 1rem;'>
+        <span class="badge">🤖 ML-Powered</span>
+        <span class="badge" style='margin-left: 0.5rem;'>📈 Predictive</span>
+        <span class="badge" style='margin-left: 0.5rem;'>🔍 Real-time</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------
-# LOAD DATA
+# DATA LOADING WITH ERROR HANDLING
 # -------------------------------------------------
 @st.cache_data
 def load_data():
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(base_path, "preprocessed_enforcement_data.csv")
-    df = pd.read_csv(file_path)
-    df["date"] = pd.to_datetime(df["date"])
-    return df
+    """
+    Load enforcement data from CSV file with caching.
+    
+    Returns:
+        pd.DataFrame: Loaded and preprocessed dataframe
+        
+    Raises:
+        FileNotFoundError: If data file is not found
+        pd.errors.ParserError: If CSV parsing fails
+    """
+    try:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(base_path, config.DATA_PATH)
+        
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Data file not found: {file_path}")
+        
+        df = pd.read_csv(file_path)
+        
+        # Validate required columns
+        required_cols = ["date", "action_as_per_source", "organization", "standard_value"]
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            raise ValueError(f"Missing required columns: {missing_cols}")
+        
+        df["date"] = pd.to_datetime(df["date"])
+        return df
+        
+    except FileNotFoundError as e:
+        st.error(f"❌ Data Loading Error: {str(e)}")
+        st.stop()
+    except pd.errors.ParserError as e:
+        st.error(f"❌ CSV Parsing Error: {str(e)}")
+        st.stop()
+    except ValueError as e:
+        st.error(f"❌ Data Validation Error: {str(e)}")
+        st.stop()
 
 df = load_data()
 
@@ -322,19 +523,62 @@ if question:
     st.success(response)
 
 # -------------------------------------------------
-# PDF EXPORT
+# PDF EXPORT WITH ENHANCED FORMATTING
 # -------------------------------------------------
 def generate_pdf():
+    """
+    Generate comprehensive PDF report with analysis results.
+    
+    Returns:
+        BytesIO: PDF document as bytes buffer
+    """
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer)
+    doc = SimpleDocTemplate(buffer, topMargin=0.5*inch, bottomMargin=0.5*inch)
     elements = []
     styles = getSampleStyleSheet()
-
-    elements.append(Paragraph("AI Enforcement Intelligence Report", styles["Heading1"]))
-    elements.append(Spacer(1, 0.3 * inch))
-    elements.append(Paragraph(f"Trend: {trend}", styles["Normal"]))
-    elements.append(Paragraph(f"Growth Percentage: {growth_pct:.2f}%", styles["Normal"]))
-
+    
+    # Custom styles
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#00d4ff'),
+        spaceAfter=12,
+        alignment=1
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=colors.HexColor('#7fd3ff'),
+        spaceAfter=10
+    )
+    
+    # Report header
+    elements.append(Paragraph("🤖 AI ENFORCEMENT INTELLIGENCE REPORT", title_style))
+    elements.append(Spacer(1, 0.2*inch))
+    
+    # Executive Summary
+    elements.append(Paragraph("📊 Executive Summary", heading_style))
+    elements.append(Paragraph(f"<b>Trend:</b> {trend}", styles['Normal']))
+    elements.append(Paragraph(f"<b>Growth Rate:</b> {growth_pct:.2f}%", styles['Normal']))
+    elements.append(Paragraph(f"<b>Latest Value:</b> {latest_value:,.0f}", styles['Normal']))
+    elements.append(Paragraph(f"<b>Average Monthly:</b> {average_value:,.0f}", styles['Normal']))
+    elements.append(Spacer(1, 0.2*inch))
+    
+    # Top performers
+    elements.append(Paragraph("🏆 Top Performers", heading_style))
+    elements.append(Paragraph(f"<b>Highest Performer:</b> {highest_org} ({highest_value:,.0f})", styles['Normal']))
+    elements.append(Paragraph(f"<b>Lowest Performer:</b> {lowest_org} ({lowest_value:,.0f})", styles['Normal']))
+    elements.append(Spacer(1, 0.2*inch))
+    
+    # Analysis details
+    elements.append(Paragraph("📈 Analysis Details", heading_style))
+    elements.append(Paragraph(f"<b>Time Period:</b> {df['date'].min().date()} to {df['date'].max().date()}", styles['Normal']))
+    elements.append(Paragraph(f"<b>Organizations Analyzed:</b> {len(selected_orgs)}", styles['Normal']))
+    elements.append(Paragraph(f"<b>Total Records:</b> {len(filtered_df):,}", styles['Normal']))
+    
     doc.build(elements)
     buffer.seek(0)
     return buffer

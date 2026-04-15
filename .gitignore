@@ -1,4 +1,9 @@
 .env
 __pycache__/
 *.pyc
-.streamlit/git add .
+.streamlit/secrets.toml
+*.egg-info/
+dist/
+build/
+.DS_Store
+.venv/

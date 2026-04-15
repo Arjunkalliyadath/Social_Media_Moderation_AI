@@ -1,21 +1,84 @@
+"""
+Predictive Intelligence Module
+Advanced forecasting and trend projection for enforcement data.
+
+This page provides 6-month forecasts with confidence intervals and
+comparative analysis across platforms.
+"""
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import os
+from config import get_config
 
 # -------------------------------------------------
-# PAGE CONFIG
+# PAGE CONFIG & THEME
 # -------------------------------------------------
+config = get_config()
+
 st.set_page_config(
     page_title="Predictive Intelligence",
     page_icon="🔮",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
+# Professional Theme CSS
+THEME_CSS = """
+<style>
+    .main {
+        background: linear-gradient(135deg, #0f1419 0%, #1a1f28 100%);
+        color: #e8eef2;
+    }
+    
+    [data-testid="stSidebarContent"] {
+        background: linear-gradient(180deg, #1a1f28 0%, #252d38 100%);
+    }
+    
+    .main h1, .main h2 {
+        color: #00d4ff;
+    }
+    
+    .stPlotlyChart {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 102, 255, 0.1);
+    }
+    
+    .badge {
+        display: inline-block;
+        background: rgba(0, 212, 255, 0.15);
+        color: #00d4ff;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+</style>
+"""
+
+st.markdown(THEME_CSS, unsafe_allow_html=True)
+
 st.title("🔮 Predictive Enforcement Intelligence")
-st.markdown("Forecast Comparison • Growth Projection • Confidence Modeling")
+
+st.markdown("""
+<div style='text-align: center; margin-bottom: 2rem;'>
+    <p style='color: #7f8a9c; font-size: 1.1rem;'>
+        <strong>6-Month Forecasting</strong> • <strong>Trend Projection</strong> • <strong>Confidence Modeling</strong>
+    </p>
+    <p style='color: #5a6476; font-size: 0.95rem; margin-top: 0.5rem;'>
+        Advanced predictive analytics with machine learning confidence intervals
+    </p>
+    <div style='margin-top: 1rem;'>
+        <span class="badge">📈 Linear Regression</span>
+        <span class="badge" style='margin-left: 0.5rem;'>🎯 Trend Analysis</span>
+        <span class="badge" style='margin-left: 0.5rem;'>⚡ Real-time Updates</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------
 # LOAD DATA
