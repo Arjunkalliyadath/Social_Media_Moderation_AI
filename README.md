@@ -1,4 +1,4 @@
-# � AI Enforcement Intelligence System
+# AI Enforcement Intelligence System
 
 > **Advanced Data Science & ML Application for Multi-Platform Enforcement Analytics**
 
