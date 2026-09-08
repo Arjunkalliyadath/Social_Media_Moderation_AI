@@ -1,496 +1,218 @@
-# � AI Enforcement Intelligence System
+# 🛡️ TrustLens
 
-> **Advanced Data Science & ML Application for Multi-Platform Enforcement Analytics**
+**Social Media Enforcement Intelligence — unit-correct analytics, anomaly detection, and forecasting for platform Trust & Safety transparency data.**
 
-A production-ready Streamlit application showcasing modern data science practices, machine learning integration, and interactive data visualization for enforcement monitoring and predictive analytics.
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![Streamlit](https://img.shields.io/badge/streamlit-1.63-ff4b4b)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-active-brightgreen)
 
----
-
-## ✨ Features
-
-### Core Analytics
-- **Multi-Platform Monitoring** - Comparative analysis across different enforcement platforms
-- **Time-Series Analysis** - Track trends with monthly aggregation and trend detection
-- **Anomaly Detection** - ML-powered isolation forest for outlier identification
-- **Organization Ranking** - Comprehensive performance metrics and comparisons
-
-### Predictive Intelligence
-- **6-Month Forecasting** - Linear regression-based trend projection
-- **Trend Analysis** - Statistical trend calculation with growth rate metrics
-- **Risk Intelligence** - Volatility assessment and anomaly flagging
-
-### User Experience
-- **Interactive Dashboards** - Real-time filters and responsive visualizations
-- **Professional Dark Theme** - Modern, eye-friendly design with gradient backgrounds
-- **Multi-page Application** - Modular architecture with Streamlit multi-page support
-- **PDF Export** - Generate detailed reports programmatically
-
-### AI Assistant
-- **Offline NLP Engine** - Intent-based Q&A without external APIs
-- **Analytics Queries** - Natural language interface to data insights
-- **No API Dependencies** - Fully self-contained ML inference
+TrustLens turns the enforcement-transparency reports that platforms like Meta, X,
+WhatsApp, and others publish (accounts banned, content removed, proactive
+detection rates, etc.) into a single interactive dashboard — with anomaly
+detection, per-platform forecasting, and an offline Q&A assistant, no API
+keys or internet connection required.
 
 ---
 
-## 🛠️ Tech Stack
+## Why this rebuild happened
 
-### Core Framework
-- **Streamlit** - Interactive web application framework
-- **Python 3.10+** - Modern Python with type hints
+This project previously ran, but stopped working after being re-uploaded because
+`requirements.txt` was pinned to 2023-era package versions with no installable
+wheels for current Python — `pip install -r requirements.txt` failed outright.
 
-### Data Science & ML
-- **Pandas** - Data manipulation and analysis
-- **NumPy** - Numerical computing
-- **Scikit-learn** - Machine learning (Isolation Forest, Linear Regression)
-- **Plotly** - Interactive data visualization
+While fixing that, a more important problem turned up in the data pipeline
+itself: the source CSV reports its `standard_value` column in **mixed units**
+— absolute counts, thousands, millions, and percentages, all in the same
+column, with one unit even misspelled (`"value in percenatge"`). The original
+app summed that column directly. The result: a platform reporting in millions
+looked *a thousand times smaller* than one reporting in absolute numbers, so
+every ranking, chart, and forecast in the dashboard was quietly wrong.
 
-### Reporting & Export
-- **ReportLab** - PDF document generation
-- **Python-dotenv** - Secure environment configuration
+**Example — total enforcement actions per platform, before and after the fix:**
 
-### Deployment
-- **Render.yaml** - Cloud deployment configuration
-- **Docker-ready** - Container-compatible architecture
+| Organization | Naive sum (raw value) | Corrected sum (unit-normalized) |
+|---|---:|---:|
+| Instagram | 138,221 | **1,920,012,159** |
+| Facebook | 96,113 | **1,006,601,000** |
+| WhatsApp | 324,753,218 | 324,753,218 |
+| ShareChat | 195,458,890 | 195,458,890 |
+| Twitter | 15,729,368 | 15,729,368 |
+
+Instagram and Facebook go from looking like the *smallest* platforms to the
+*largest* once their "millions"-denominated rows are converted correctly.
+This isn't a cosmetic bug — it inverts the headline conclusion of the
+dashboard. The full before/after breakdown, plus every other adjustment made
+to the data, is documented live in the app's **Data Quality** page.
+
+Beyond that fix, this rebuild also surfaces two large parts of the dataset the
+original app collected but never used at all: the `topic` (violation
+category) column, and the ~30% of rows reporting **Proactive Detection Rate**
+— both now have dedicated pages.
 
 ---
 
-## 🚀 Quick Start
+## Features
 
-### Prerequisites
-- Python 3.10 or higher
-- pip or conda package manager
-- Git
+### 📊 Dashboard (`app.py`)
+- KPIs: latest volume, average, trend direction, growth % (safe against
+  divide-by-zero on a zero baseline)
+- Unit-normalized trend chart with optional 3-month smoothing
+- Organization ranking (bar chart + table)
+- ML anomaly detection (Isolation Forest) with adjustable sensitivity
+- Quick regression-based forecast
+- 🤖 **Offline AI Analytics Assistant** — a chat-style Q&A panel with quick-question
+  pills. It's a deterministic, keyword-based intent matcher (not an LLM) that
+  answers from the currently filtered data — trend, rankings, volatility,
+  topics, proactive rate, and anomalies. Nothing is sent anywhere.
+- Export a PDF summary report or the filtered dataset as CSV
+- **Bring your own data**: upload any CSV with the four required columns and
+  the whole app — including every sub-page — re-analyzes your data instead of
+  the bundled sample
 
-### Installation
+### 🔮 Forecast
+Per-organization projections with 95% confidence bands and a reliability
+score (guarded against divide-by-zero for flat/near-zero forecasts).
 
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-cd social_media_Main
+### 🧭 Category Insights
+Breaks enforcement volume down by violation category: top categories overall,
+a category × platform heatmap, and a trend chart for any single category.
+
+### 🛡️ Proactive Detection
+Surfaces the platforms' proactive-detection **rate** (% of violations caught
+before being reported) — a genuinely different metric from volume, kept
+separate throughout the app so it's never accidentally summed with counts.
+
+### 📋 Data Quality
+Full transparency on the cleaning pipeline: rows read, rows dropped, unit
+typos fixed, rate-rows excluded from volume totals, missing-value summary,
+and a downloadable cleaned dataset.
+
+---
+
+## Project structure
+
+```
+trustlens/
+├── app.py                          # Main dashboard
+├── config.py                       # Central configuration (env vars, ML params, unit rules)
+├── data_utils.py                   # The data-cleaning pipeline (unit normalization lives here)
+├── theme.py                        # Shared CSS/header used by every page
+├── pages/
+│   ├── 1_🔮_Forecast.py
+│   ├── 2_🧭_Category_Insights.py
+│   ├── 3_🛡️_Proactive_Detection.py
+│   └── 4_📋_Data_Quality.py
+├── preprocessed_enforcement_data.csv   # Bundled sample dataset
+├── requirements.txt
+├── .env.example
+├── .streamlit/config.toml
+├── Procfile / render.yaml / setup.sh   # Deployment
+└── README.md
 ```
 
-2. **Create virtual environment** (recommended)
+---
+
+## Getting started
+
+### Requirements
+- Python 3.12 (see `.python-version`)
+
+### Install & run locally
+
 ```bash
+git clone https://github.com/<your-username>/trustlens.git
+cd trustlens
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. **Install dependencies**
-```bash
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-4. **Configure environment**
-```bash
-cp .env.example .env
-# Edit .env with your configuration if needed
-```
-
-5. **Run the application**
-```bash
 streamlit run app.py
 ```
 
-The app will open at `http://localhost:8501`
+The app opens at `http://localhost:8501`. No API keys or external services
+are needed — everything, including the AI assistant, runs locally.
+
+### Configuration
+
+Copy `.env.example` to `.env` to customize:
+
+| Variable | Default | Description |
+|---|---|---|
+| `ENVIRONMENT` | `development` | `development` or `production` |
+| `DATA_PATH` | `preprocessed_enforcement_data.csv` | Bundled dataset path |
+| `ANOMALY_CONTAMINATION` | `0.08` | Isolation Forest sensitivity (0.02–0.25) |
+| `FORECAST_MONTHS` | `6` | Default forecast horizon |
 
 ---
 
-## 📁 Project Structure
+## Using your own data
 
-```
-social_media_Main/
-├── app.py                              # Main dashboard application
-├── config.py                           # Configuration management
-├── requirements.txt                    # Python dependencies
-├── .env.example                        # Environment template
-├── .gitignore                          # Git ignore rules
-├── .streamlit/                         # Streamlit config
-├── pages/
-│   └── forecast.py                    # Predictive intelligence module
-├── preprocessed_enforcement_data.csv  # Data file (excluded from git)
-├── Procfile                            # Deployment configuration
-├── render.yaml                         # Render deployment config
-└── README.md                           # This file
-```
+Upload any CSV from the sidebar with at least these columns:
 
----
+| Column | Required | Notes |
+|---|---|---|
+| `date` | ✅ | Any format `pandas.to_datetime` can parse |
+| `organization` | ✅ | Platform/entity name |
+| `action_as_per_source` | ✅ | e.g. `Content Removed`, `Total Accounts Banned`, `Proactive Rate` |
+| `standard_value` | ✅ | The numeric value |
+| `units` | optional | `value in absolute number` / `thousands` / `millions` / `percentage` — enables unit normalization |
+| `topic` | optional | Violation category — unlocks Category Insights |
+| `proactive_flag` | optional | Unlocks additional proactive-detection detail |
 
-## 🔐 Security Best Practices
-
-This project implements enterprise-grade security practices:
-
-### Secrets Management
-- **No Hardcoded Credentials** - All sensitive data in `.env`
-- **Environment Variables** - Secure configuration through config.py
-- **Git Protection** - `.env` excluded from version control
-- **Template File** - `.env.example` shows required variables
-
-### Data Protection
-- **Input Validation** - Required columns checked on data load
-- **Error Handling** - Graceful failure modes with user-friendly messages
-- **Type Checking** - Python type hints for better IDE support
-
-### Code Quality
-- **Docstrings** - All functions documented with Args/Returns
-- **Modular Architecture** - Separation of concerns (config, main app, pages)
-- **Caching** - Streamlit cache decorators for performance
+If `units` is omitted, values are assumed to already be absolute counts. If
+`topic` is omitted, the Category Insights page politely tells you it isn't
+available for that file rather than failing.
 
 ---
 
-## 📊 Data Format
+## Deployment
 
-The application expects a CSV file with these columns:
+**Render** — `render.yaml` is included; connect the repo and deploy as a Web Service.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `date` | datetime | Date of the enforcement action |
-| `organization` | string | Platform/organization name |
-| `action_as_per_source` | string | Type of action (Content Removed, Account Banned, etc.) |
-| `standard_value` | numeric | Enforcement volume/count |
+**Streamlit Community Cloud** — point it at `app.py`; `.python-version` and
+`requirements.txt` are picked up automatically.
 
-**Supported Actions:**
-- Content Actioned
-- Content Removed
-- Removed
-- Total Accounts Banned
-- Total Accounts Suspended
+**Heroku / any Procfile host** — `Procfile` and `setup.sh` are included.
 
 ---
 
-## 💡 Machine Learning Models
+## Methodology notes
 
-### Anomaly Detection
-**Algorithm:** Isolation Forest
-- **Contamination:** 8% (configurable in config.py)
-- **Purpose:** Identify unusual enforcement patterns
-- **Output:** Flagged anomalies with timestamps
-
-### Trend Forecasting
-**Algorithm:** Linear Regression
-- **Method:** Least squares line fitting to time-indexed data
-- **Forecast Horizon:** 6 months ahead
-- **Metrics:** Slope (trend direction) and R² validation
-
-### NLP Intent Classification
-**Method:** Keyword-based classification
-- **Offline:** No API calls required
-- **Categories:** Trend, highest, lowest, average, comparison, volatility, forecast
-- **Performance:** Real-time response
+- **Unit normalization**: `standard_value` is multiplied by 1, 1,000, or
+  1,000,000 depending on the cleaned `units` string. Percentage/rate rows are
+  set to `NaN` in `normalized_value` on purpose so they can never enter a
+  volume `SUM` — see `data_utils.compute_normalized_value`.
+- **Anomaly detection**: `sklearn.ensemble.IsolationForest` on the
+  unit-normalized overall time series.
+- **Forecasting**: ordinary least-squares linear regression per organization,
+  clipped at zero (a count can't be negative), with a 95% confidence band
+  from the residual standard deviation.
+- **Reliability score**: `100 − coefficient of variation` of the forecast,
+  floored at 0. It measures how noisy the *historical* data was — treat
+  forecasts as directional, not guaranteed.
 
 ---
 
-## 🎨 UI/UX Features
+## Roadmap
 
-### Professional Dark Theme
-- **Gradient Backgrounds** - Modern, eye-friendly blue gradients
-- **Consistent Styling** - CSS variables applied across pages
-- **Responsive Design** - Mobile and desktop compatible
-- **Accessibility** - High contrast colors and readable typography
-
-### Interactive Components
-- **Dynamic Filters** - Date range and multi-select organization filters
-- **Real-time Charts** - Plotly interactive visualizations
-- **Hover Information** - Detailed tooltip data on charts
-- **Export Functionality** - PDF reports with one click
+- [ ] Seasonal decomposition for platforms with 2+ years of history
+- [ ] Multi-file upload to compare two reporting periods side by side
+- [ ] CSV schema auto-mapping wizard for datasets with differently-named columns
+- [ ] Optional scheduled email/Slack digest of new anomalies
 
 ---
 
-## 📈 Analytics Features
+## Contributing
 
-### Key Metrics Dashboard
-- Latest Month Volume
-- Average Monthly Value
-- Overall Trend (📈 up, 📉 down, ➖ stable)
-- Growth Percentage
+Issues and pull requests are welcome. Please run the app locally and confirm
+`streamlit run app.py` starts cleanly before submitting a PR.
 
-### Visualizations
-1. **Trend Chart** - Line plot by organization over time
-2. **Organization Rankings** - Sortable performance table
-3. **Anomaly Detection** - Highlighted unusual patterns
-4. **Forecast Chart** - 6-month prediction with regression line
+## License
 
-### AI Assistant Queries
-- "Show me the trend" → Trend direction and percentage
-- "Who is the top performer?" → Highest organization
-- "What's the average?" → Monthly average metrics
-- "Forecast the next 6 months" → Future trend projection
-- "Which org is most volatile?" → Volatility analysis
+MIT — see [LICENSE](LICENSE).
 
----
+## Data source
 
-## 🔧 Configuration
-
-### Environment Variables
-All configuration through `.env` file:
-
-```env
-ENVIRONMENT=development
-DATA_PATH=preprocessed_enforcement_data.csv
-API_KEY=your_api_key_here  # If using external APIs
-```
-
-### Streamlit Settings
-Located in `.streamlit/config.toml`:
-- Server configuration
-- Logger settings
-- Client preferences
-
----
-
-## 📦 Deployment
-
-### Render Deployment
-Pre-configured in `render.yaml`:
-```bash
-render deploy
-```
-
-**Features:**
-- Automatic Python 3.10 environment
-- All dependencies installed
-- Streamlit server hardened for production
-
-### Docker Deployment
-Container-ready with standard Dockerfile setup
-
----
-
-## 🧪 Testing & Validation
-
-### Data Validation
-- CSV format verification
-- Required column checks
-- Date format validation
-- Type conversion error handling
-
-### Model Validation
-- Minimum data points for anomaly detection (n > 6)
-- Linear regression slope confidence
-- Forecast confidence intervals
-
----
-
-## 📝 Data Science Methodology
-
-### Exploratory Data Analysis (EDA)
-1. Time-series decomposition
-2. Organization distribution analysis
-3. Action type frequency distribution
-4. Temporal trends identification
-
-### Feature Engineering
-- Time-based indexing for regression
-- Date aggregation (daily → monthly)
-- Organization-wise segregation
-- Anomaly scoring via Isolation Forest
-
-### Model Validation
-- Regression R² scores
-- Anomaly detection precision/recall
-- Forecast error metrics
-- Cross-validation ready
-
----
-
-## 🎓 Key Skills Demonstrated
-
-This project showcases:
-- ✅ Full-stack data science application development
-- ✅ Production-ready Python code practices
-- ✅ ML model integration and deployment
-- ✅ Interactive UI/UX with Streamlit
-- ✅ Secure credential management
-- ✅ Data visualization best practices
-- ✅ API-less AI implementation
-- ✅ Cloud deployment readiness
-- ✅ Time-series forecasting
-- ✅ Anomaly detection algorithms
-
----
-
-## 🐛 Troubleshooting
-
-### Issue: "Data file not found"
-**Solution:** Ensure `preprocessed_enforcement_data.csv` is in the root directory
-
-### Issue: Import errors
-**Solution:** Run `pip install -r requirements.txt` again
-
-### Issue: Slow performance on large datasets
-**Solution:** Filter by date range or organization in sidebar
-
-### Issue: Environment variables not loading
-**Solution:** Ensure `.env` file is in root directory, not `.env.txt`
-
----
-
-## 📧 Support & Contribution
-
-For issues, questions, or improvements:
-1. Check existing documentation
-2. Review code comments and docstrings
-3. Test with sample data first
-4. Submit detailed error reports with stack traces
-
----
-
-## 📄 License
-
-MIT License - See LICENSE file for details
-
----
-
-## 👤 Author
-
-**Data Science Professional**
-- Focus: Data Analytics, ML Engineering, Cloud Deployment
-- Stack: Python, SQL, Streamlit, Scikit-learn, Pandas
-- Expertise: Time-series forecasting, Anomaly detection, Dashboard development
-
----
-
-## 🙏 Acknowledgments
-
-- **Streamlit Community** - For the amazing web framework
-- **Plotly** - For interactive visualizations
-- **Scikit-learn** - For ML algorithms
-- **Render** - For cloud hosting
-
----
-
-**Last Updated:** April 2026  
-**Version:** 1.0.0  
-**Status:** Production Ready ✨
-
-The app will be available at `http://localhost:8501`
-
-## 📤 Deployment to Render
-
-### Step 1: Push to GitHub
-```bash
-git add .
-git commit -m "fix: resolve git conflicts and deployment configuration"
-git push origin main
-```
-
-### Step 2: Deploy on Render
-1. Go to [render.com](https://render.com)
-2. Click "New" → "Web Service"
-3. Connect your GitHub repository
-4. Select the repository: `social_media_Main`
-5. **Runtime**: Python 3.10
-6. **Build Command**: `pip install -r requirements.txt`
-7. **Start Command**: `streamlit run app.py --server.port=$PORT --server.address=0.0.0.0`
-8. Click "Create Web Service"
-
-### Step 3: Set Environment Variables (in Render Dashboard)
-Add these environment variables:
-- `STREAMLIT_SERVER_HEADLESS=true`
-- `STREAMLIT_SERVER_ENABLECORS=false`
-- `STREAMLIT_LOGGER_LEVEL=info`
-
-## 📁 Project Structure
-
-```
-social_media_Main/
-├── app.py                          # Main dashboard
-├── pages/
-│   └── forecast.py                 # Predictive analytics page
-├── preprocessed_enforcement_data.csv # Dataset
-├── requirements.txt                # Python dependencies
-├── setup.sh                        # Render setup script
-├── Procfile                        # Procfile for Render
-├── render.yaml                     # Render configuration
-├── .streamlit/
-│   └── config.toml                # Streamlit theme configuration
-├── .gitignore                      # Git ignore rules
-└── .python-version                # Python version specification
-```
-
-## 🔧 Configuration
-
-The `.streamlit/config.toml` file contains the professional theme settings:
-- **Primary Color**: #0066ff (Modern Blue)
-- **Background**: #0f1419 (Dark)
-- **Secondary Background**: #1a1f28 (Darker)
-- **Text Color**: #e8eef2 (Light Gray)
-- **Font**: Sans serif
-
-## 📊 Dashboard Features
-
-### Main Dashboard (app.py)
-- Monthly enforcement trends across organizations
-- Organization ranking and benchmarking
-- Anomaly detection with risk flagging
-- 6-month enforcement forecasts
-- KPI metrics (Latest, Average, Trend, Growth %)
-- AI-powered natural language query assistant
-- PDF report export functionality
-
-### Forecast Page (pages/forecast.py)
-- Top 4 organization selection
-- Individual forecasting with confidence bands
-- Growth projection comparison
-- Reliability scoring system
-- Historical + predicted visualization
-
-## 🤖 AI Assistant Capabilities
-
-The offline AI engine handles natural language queries:
-- **Trend Analysis**: Ask about increasing/decreasing patterns
-- **Highest/Lowest**: Identify top and bottom performers
-- **Comparison**: Compare organizations side by side
-- **Forecasting**: Get 6-month projections
-- **Volatility**: Analyze organization instability
-
-## 📈 Data Processing
-
-- **Input**: CSV with enforcement data (date, organization, action, value)
-- **Processing**: Grouping, aggregation, time-series analysis
-- **Output**: Interactive visualizations, metrics, predictions
-
-## ⚙️ Environment Variables
-
-No API keys or sensitive data required! This is a fully offline, client-side analytics application.
-
-## 🐛 Troubleshooting
-
-### Issue: "ModuleNotFoundError"
-```bash
-pip install -r requirements.txt --force-reinstall
-```
-
-### Issue: "Port already in use"
-```bash
-streamlit run app.py --server.port 8502
-```
-
-### Issue: "Connection timeout on Render"
-- Check that all environment variables are set correctly
-- Verify the CSV file path is accessible
-- Check Render logs for detailed error messages
-
-## 📝 Notes
-
-- All computations are done client-side (no server communication)
-- Data remains private - nothing is sent to external services
-- Perfect for portfolio demonstrations of data science capabilities
-- Fully reproducible from the CSV dataset
-
-## 🎯 Portfolio Value
-
-This project demonstrates:
-- ✅ Full-stack data science skills (ML, visualization, deployment)
-- ✅ Professional UI/UX design principles
-- ✅ Production-ready code with proper configuration management
-- ✅ Cloud deployment expertise (Render)
-- ✅ Git workflow and version control
-- ✅ Advanced analytics (forecasting, anomaly detection, NLP)
-
-## 📧 Support
-
-For issues or improvements, please open an issue on GitHub.
-
----
-
-**Ready to deploy!** Push to GitHub and follow the Render deployment steps above. 🚀
+The bundled sample dataset is content-moderation transparency data
+self-reported by platforms in their public transparency reports. It contains
+only aggregate statistics — no individual user data.

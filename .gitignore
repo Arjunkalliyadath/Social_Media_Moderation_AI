@@ -7,3 +7,7 @@ dist/
 build/
 .DS_Store
 .venv/
+venv/
+env/
+*.log
+.ipynb_checkpoints/

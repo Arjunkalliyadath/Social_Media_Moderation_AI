@@ -6,7 +6,7 @@ textColor = "#e8eef2"
 font = "sans serif"
 
 [client]
-showErrorDetails = false
+showErrorDetails = true
 toolbarMode = "minimal"
 
 [logger]
@@ -14,7 +14,7 @@ level = "info"
 
 [server]
 headless = true
-runOnSave = true
+runOnSave = false
 maxUploadSize = 200
 
 [browser]
