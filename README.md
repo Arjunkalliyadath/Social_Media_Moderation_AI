@@ -15,43 +15,6 @@ keys or internet connection required.
 
 ---
 
-## Why this rebuild happened
-
-This project previously ran, but stopped working after being re-uploaded because
-`requirements.txt` was pinned to 2023-era package versions with no installable
-wheels for current Python — `pip install -r requirements.txt` failed outright.
-
-While fixing that, a more important problem turned up in the data pipeline
-itself: the source CSV reports its `standard_value` column in **mixed units**
-— absolute counts, thousands, millions, and percentages, all in the same
-column, with one unit even misspelled (`"value in percenatge"`). The original
-app summed that column directly. The result: a platform reporting in millions
-looked *a thousand times smaller* than one reporting in absolute numbers, so
-every ranking, chart, and forecast in the dashboard was quietly wrong.
-
-**Example — total enforcement actions per platform, before and after the fix:**
-
-| Organization | Naive sum (raw value) | Corrected sum (unit-normalized) |
-|---|---:|---:|
-| Instagram | 138,221 | **1,920,012,159** |
-| Facebook | 96,113 | **1,006,601,000** |
-| WhatsApp | 324,753,218 | 324,753,218 |
-| ShareChat | 195,458,890 | 195,458,890 |
-| Twitter | 15,729,368 | 15,729,368 |
-
-Instagram and Facebook go from looking like the *smallest* platforms to the
-*largest* once their "millions"-denominated rows are converted correctly.
-This isn't a cosmetic bug — it inverts the headline conclusion of the
-dashboard. The full before/after breakdown, plus every other adjustment made
-to the data, is documented live in the app's **Data Quality** page.
-
-Beyond that fix, this rebuild also surfaces two large parts of the dataset the
-original app collected but never used at all: the `topic` (violation
-category) column, and the ~30% of rows reporting **Proactive Detection Rate**
-— both now have dedicated pages.
-
----
-
 ## Features
 
 ### 📊 Dashboard (`app.py`)
