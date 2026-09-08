@@ -95,17 +95,6 @@ streamlit run app.py
 The app opens at `http://localhost:8501`. No API keys or external services
 are needed — everything, including the AI assistant, runs locally.
 
-### Configuration
-
-Copy `.env.example` to `.env` to customize:
-
-| Variable | Default | Description |
-|---|---|---|
-| `ENVIRONMENT` | `development` | `development` or `production` |
-| `DATA_PATH` | `preprocessed_enforcement_data.csv` | Bundled dataset path |
-| `ANOMALY_CONTAMINATION` | `0.08` | Isolation Forest sensitivity (0.02–0.25) |
-| `FORECAST_MONTHS` | `6` | Default forecast horizon |
-
 ---
 
 ## Using your own data
