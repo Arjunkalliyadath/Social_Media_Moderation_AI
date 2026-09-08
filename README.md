@@ -122,21 +122,6 @@ Upload any CSV from the sidebar with at least these columns:
 | `topic` | optional | Violation category — unlocks Category Insights |
 | `proactive_flag` | optional | Unlocks additional proactive-detection detail |
 
-If `units` is omitted, values are assumed to already be absolute counts. If
-`topic` is omitted, the Category Insights page politely tells you it isn't
-available for that file rather than failing.
-
----
-
-## Deployment
-
-**Render** — `render.yaml` is included; connect the repo and deploy as a Web Service.
-
-**Streamlit Community Cloud** — point it at `app.py`; `.python-version` and
-`requirements.txt` are picked up automatically.
-
-**Heroku / any Procfile host** — `Procfile` and `setup.sh` are included.
-
 ---
 
 ## Methodology notes
